@@ -1,0 +1,68 @@
+# Construye Mis Notas en un Windows de GitHub y publica la Release.
+#
+# - Al subir una etiqueta "v*" (por ejemplo v0.2.0): construye el instalador y
+#   la versión portable y crea la Release con ellos. Las notas de la Release son
+#   el mensaje de la etiqueta (git tag -a v0.2.0 -F notas.md).
+# - A mano (pestaña Actions → "Construir y publicar" → Run workflow): solo
+#   construye y deja los .exe como "artifact" descargable, sin publicar nada.
+name: Construir y publicar
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # para crear la Release y subir los .exe
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Comprobar que la etiqueta coincide con package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            Write-Error "La etiqueta es ${{ github.ref_name }} pero package.json dice $version. Sube la versión en package.json."
+          }
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Construir instalador y versión portable
+        # --publish never: la Release la crea el paso siguiente, no electron-builder.
+        run: npx electron-builder --win --publish never
+
+      - name: Guardar los .exe como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mis-notas-windows
+          path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Crear la Release con los .exe
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $exes = Get-ChildItem dist -Filter *.exe | ForEach-Object FullName
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            # Si la Release ya existe, solo se (re)suben los archivos.
+            gh release upload $tag @exes --clobber
+          } else {
+            gh release create $tag @exes --title "Mis Notas $($tag.TrimStart('v'))" --notes-from-tag --verify-tag
+          }

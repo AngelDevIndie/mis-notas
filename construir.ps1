@@ -61,7 +61,15 @@ if ($codigo -ne 0 -and (Preparar-HerramientasWindows)) {
   Write-Host "Reintentando..." -ForegroundColor Cyan
   $codigo = Empaquetar
 }
-if ($codigo -ne 0) { exit $codigo }
+if ($codigo -ne 0) {
+  # Smart App Control (Windows 11) puede bloquear el .exe temporal del desinstalador.
+  $sac = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy" -ErrorAction SilentlyContinue).VerifiedAndReputablePolicyState
+  if ($sac -eq 1 -and -not $Rapido) {
+    Write-Host "`nTienes Smart App Control activado y suele bloquear la creación del instalador." -ForegroundColor Yellow
+    Write-Host "Mira 'Problemas conocidos' en BUILD.md: puedes construir en GitHub o usar .\construir.ps1 -Rapido." -ForegroundColor Yellow
+  }
+  exit $codigo
+}
 
 # 6. Enseña lo que se ha creado.
 Write-Host "`nListo. Archivos en dist\:" -ForegroundColor Green

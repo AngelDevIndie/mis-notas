@@ -40,6 +40,25 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\construir.ps1
 ```
 
+## Publicar una versión: GitHub la construye por ti
+
+El repositorio trae un **workflow** (`.github/workflows/release.yml`): unas instrucciones que GitHub ejecuta en un Windows en la nube, gratis. Así la build no depende de tu ordenador.
+
+Para publicar una versión nueva:
+
+1. Sube el número de `"version"` en `package.json` (por ejemplo `0.2.0` → `0.3.0`) y ejecuta `npm install --package-lock-only` para que `package-lock.json` diga lo mismo.
+2. Haz el commit y súbelo: `git add .`, `git commit -m "..."` y `git push`.
+3. Escribe las notas de la versión en un archivo fuera del proyecto (por ejemplo `notas.md`) y crea la **etiqueta** con ellas:
+   ```bash
+   git tag -a v0.3.0 -F notas.md
+   git push origin v0.3.0
+   ```
+4. En la pestaña **Actions** del repositorio verás el workflow trabajando (unos 5 minutos). Al terminar, en **Releases** estará la versión con el instalador, la portable y tus notas.
+
+El workflow comprueba que la etiqueta coincide con `package.json`; si no, se para sin publicar nada. Si la Release ya existía, solo vuelve a subir los `.exe`.
+
+Para construir **sin publicar**: Actions → "Construir y publicar" → **Run workflow**. Los `.exe` quedan en el apartado "Artifacts" de esa ejecución.
+
 ## Qué hace el script, paso a paso
 
 1. Comprueba que tienes `npm`.
@@ -68,11 +87,17 @@ Para sacar una versión nueva, sube el número de `"version"` en `package.json` 
 **"Cannot create symbolic link: El cliente no dispone de un privilegio requerido".**
 electron-builder descarga unas herramientas (`winCodeSign`) que incluyen dos enlaces simbólicos de macOS, y Windows no deja crearlos sin permisos de administrador. El script lo arregla solo: extrae esas herramientas ignorando los dos enlaces (en Windows no se usan) y vuelve a intentarlo. Otra solución es activar el **Modo de desarrollador** en Configuración → Sistema → Para programadores.
 
+**"spawn UNKNOWN" al crear el instalador, o "Una directiva de Control de aplicaciones bloqueó este archivo".**
+Es **Smart App Control** (Control inteligente de aplicaciones) de Windows 11. Para fabricar el desinstalador, electron-builder genera y ejecuta un `.exe` temporal sin firmar, y Smart App Control lo bloquea si no le da buena reputación (depende de cada archivo, así que unas veces pasa y otras no). La app en sí (`dist\win-unpacked\Mis Notas.exe`) sí arranca. Soluciones:
+- **Construir en GitHub** (apartado anterior). Es la recomendada.
+- `.\construir.ps1 -Rapido` para tener la app sin instalador.
+- No desactives Smart App Control solo por esto: en muchas versiones de Windows 11, una vez apagado no se puede volver a encender sin reinstalar Windows.
+
 **"EBUSY: resource busy or locked".**
 Mis Notas está abierta. Ciérrala y repite.
 
 **Windows SmartScreen avisa al abrir el instalador.**
-El `.exe` no está **firmado** con un certificado de código (cuestan dinero y no hacen falta para uso personal). Para abrirlo: "Más información" → "Ejecutar de todas formas". Firmarlo queda para más adelante.
+El `.exe` no está **firmado** con un certificado de código. Para abrirlo: "Más información" → "Ejecutar de todas formas". En ordenadores con **Smart App Control** activado puede que ni siquiera deje abrir el instalador. La solución definitiva es firmarlo; un servicio asequible es Azure Trusted Signing de Microsoft. Queda para más adelante.
 
 **`npm audit` avisa de vulnerabilidades.**
 Están en las herramientas de construcción, que no van dentro de la app: `npm audit --omit=dev` no da ninguna. Lo que sí va dentro es **Electron**, y conviene tenerlo en una versión que reciba parches de seguridad (desde la 0.2.0, Mis Notas usa Electron 44). Para actualizarlo, hazlo en una rama de Git y repite las pruebas antes de publicar.
