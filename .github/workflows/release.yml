@@ -20,10 +20,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -45,7 +45,7 @@ jobs:
         run: npx electron-builder --win --publish never
 
       - name: Guardar los .exe como artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mis-notas-windows
           path: dist/*.exe
@@ -58,6 +58,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.ref_name }}"
+          # checkout solo trae a qué commit apunta la etiqueta, no su mensaje.
+          # Sin esto, --notes-from-tag usaría el mensaje del commit.
+          git fetch --force origin "refs/tags/${tag}:refs/tags/${tag}"
           $exes = Get-ChildItem dist -Filter *.exe | ForEach-Object FullName
           gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
