@@ -1,0 +1,244 @@
+/* Colores en variables: el tema oscuro solo las redefine
+   (en :root[data-tema="oscuro"] y con "como el sistema"). */
+:root {
+  --fondo: #fbf8f1;      /* papel crema */
+  --texto: #2b2b2b;      /* gris tinta */
+  --barras: #f1ece0;     /* pestañas y barras */
+  --acento: #2f7d79;     /* verde azulado */
+  --suave: #7a766c;      /* texto secundario */
+  --borde: #e2dccd;
+  --hover: #e7e1d2;
+  --radio: 8px;
+  --letra-ui: "Segoe UI", system-ui, sans-serif;
+  --letra-editor: Consolas, "Cascadia Mono", "Courier New", monospace;
+  --tam-editor: 15px;
+}
+
+/* Tema oscuro: elegido a mano o "como el sistema" con el sistema en oscuro */
+:root[data-tema="oscuro"] {
+  --fondo: #1e1f1d; --texto: #e8e4d9; --barras: #2a2b28; --acento: #5fb3ad;
+  --suave: #a29d90; --borde: #3a3b37; --hover: #353631;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-tema="sistema"] {
+    --fondo: #1e1f1d; --texto: #e8e4d9; --barras: #2a2b28; --acento: #5fb3ad;
+    --suave: #a29d90; --borde: #3a3b37; --hover: #353631;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--letra-ui);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* --- Fila de pestañas --- */
+.barra-superior {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 0;
+  background: var(--barras);
+  border-bottom: 1px solid var(--borde);
+}
+
+.logo { width: 22px; height: 22px; color: var(--acento); flex: none; margin: 0 6px 6px 4px; }
+
+.pestanas {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;       /* con muchas pestañas, la fila se desplaza de lado */
+  scrollbar-width: none;  /* sin barra visible: se mueve con la rueda o al cambiar de pestaña */
+}
+
+.pestana {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;   /* se encogen hasta min-width y después la fila se desplaza */
+  max-width: 200px;
+  min-width: 90px;
+  white-space: nowrap;
+  padding: 7px 6px 7px 12px;
+  border-radius: var(--radio) var(--radio) 0 0;
+  color: var(--suave);
+  cursor: default;
+  user-select: none;
+}
+.pestana:hover { background: var(--hover); }
+.pestana.activa { background: var(--fondo); color: var(--texto); }
+
+.pestana-nombre { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Punto de "cambios sin guardar en disco" */
+.pestana-punto { width: 7px; height: 7px; border-radius: 50%; background: var(--acento); flex: none; }
+
+.pestana-cerrar {
+  flex: none;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  border: none; border-radius: 5px;
+  background: transparent; color: inherit;
+  font-size: 15px; line-height: 1;
+  cursor: pointer;
+}
+.pestana-cerrar:hover { background: var(--borde); color: var(--texto); }
+
+/* --- Botones con icono --- */
+.boton-icono {
+  flex: none;
+  width: 30px; height: 30px;
+  margin-bottom: 4px;
+  display: grid; place-items: center;
+  border: none; border-radius: var(--radio);
+  background: transparent; color: var(--texto);
+  cursor: pointer;
+}
+.boton-icono svg { width: 18px; height: 18px; }
+.boton-icono:hover:not(:disabled) { background: var(--hover); color: var(--acento); }
+.boton-icono:focus-visible, .pestana-cerrar:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+
+.acciones { display: flex; gap: 2px; margin-left: auto; padding-left: 8px; }
+
+
+/* --- Área de escritura --- */
+.hoja { flex: 1; display: flex; min-height: 0; position: relative; }
+
+#editor {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 24px 32px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--letra-editor);
+  font-size: var(--tam-editor);
+  line-height: 1.6;
+  caret-color: var(--acento);
+  position: relative; /* encima del espejo */
+  background: transparent;
+}
+/* Sin ajuste de línea: barra de desplazamiento horizontal */
+#editor.sin-ajuste { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+
+/* Espejo: mismo texto, misma letra, detrás del área. Solo se ve el resaltado. */
+.espejo {
+  position: absolute; top: 0; left: 0;
+  overflow: hidden;
+  padding: 24px 32px;
+  font-family: var(--letra-editor);
+  font-size: var(--tam-editor);
+  line-height: 1.6;
+  color: transparent;
+  visibility: hidden;
+  pointer-events: none;
+}
+.espejo.visible { visibility: visible; }
+.espejo mark { background: color-mix(in srgb, var(--acento) 35%, transparent); color: transparent; border-radius: 2px; }
+
+/* Pestaña mientras se arrastra (también con el dedo) */
+.pestana { touch-action: none; }
+.pestana.arrastrando { background: var(--hover); color: var(--texto); opacity: 0.85; }
+
+/* --- Barra de búsqueda --- */
+.barra-buscar {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 12px;
+  background: var(--barras);
+  border-bottom: 1px solid var(--borde);
+}
+.barra-buscar[hidden], .fila-buscar[hidden] { display: none; }
+.fila-buscar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* El campo se estrecha en ventanas pequeñas (mínimo 480 px de ancho) */
+.fila-buscar input[type="text"] { flex: 0 1 240px; min-width: 120px; }
+.contador { min-width: 110px; color: var(--suave); }
+.contador.sin-resultados { color: #c0533d; }
+.opcion { display: flex; align-items: center; gap: 4px; color: var(--suave); }
+.cerrar { margin-left: auto; }
+
+/* Campos y botones de texto (barra, panel, cuadros) */
+input[type="text"], input[type="number"] {
+  padding: 5px 8px;
+  border: 1px solid var(--borde); border-radius: 6px;
+  background: var(--fondo); color: var(--texto);
+  font: inherit;
+}
+input:focus { outline: 2px solid var(--acento); outline-offset: -1px; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--acento); }
+.boton-texto {
+  padding: 4px 10px; min-width: 28px;
+  border: 1px solid var(--borde); border-radius: 6px;
+  background: var(--fondo); color: var(--texto);
+  font: inherit; cursor: pointer;
+}
+.boton-texto:hover { background: var(--hover); }
+.boton-texto:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+.boton-texto.principal { background: var(--acento); border-color: var(--acento); color: var(--fondo); }
+
+/* --- Panel de ajustes y menú de pestañas --- */
+.panel, .menu {
+  position: fixed; z-index: 10;
+  background: var(--fondo); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+}
+.panel[hidden], .menu[hidden] { display: none; }
+.panel { width: 270px; overflow-y: auto; padding: 6px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.panel > * { flex: none; } /* en una ventana baja, el panel se desplaza en vez de aplastarse */
+.panel h2 { margin: 8px 0 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--suave); }
+.opciones-tema { display: flex; flex-direction: column; gap: 4px; }
+.opciones-tema label, .interruptor { display: flex; align-items: center; gap: 8px; }
+.zoom { display: flex; align-items: center; gap: 6px; }
+#zoom-valor { min-width: 44px; text-align: center; }
+.boton-texto.ancho { margin-top: 4px; }
+.atajos { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; font-size: 12px; }
+.atajos dt { color: var(--suave); }
+.atajos dd { margin: 0; }
+
+.menu { padding: 4px; display: flex; flex-direction: column; min-width: 190px; }
+.menu button {
+  padding: 6px 10px; text-align: left;
+  border: none; border-radius: 5px;
+  background: transparent; color: var(--texto); font: inherit; cursor: pointer;
+}
+.menu button:hover:not(:disabled), .menu button:focus-visible { background: var(--hover); outline: none; }
+.menu button:disabled { opacity: 0.45; cursor: default; }
+
+/* --- Cuadro "Ir a la línea" --- */
+.dialogo {
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  background: var(--fondo); color: var(--texto);
+  padding: 16px 18px;
+}
+.dialogo::backdrop { background: rgb(0 0 0 / 0.2); }
+.dialogo form { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+.dialogo .botones { display: flex; justify-content: flex-end; gap: 8px; }
+#editor::selection { background: color-mix(in srgb, var(--acento) 25%, transparent); }
+
+/* --- Barra de estado --- */
+.barra-estado {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 4px 16px;
+  background: var(--barras);
+  border-top: 1px solid var(--borde);
+  color: var(--suave);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* "hidden" debe ganar al display: flex de arriba (ocultar desde ajustes) */
+.barra-estado[hidden] { display: none; }

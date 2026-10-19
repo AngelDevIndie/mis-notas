@@ -1,0 +1,52 @@
+{
+  "name": "mis-notas",
+  "productName": "Mis Notas",
+  "version": "0.1.0",
+  "description": "Editor de notas de escritorio con pestañas que no pierde nada de lo que escribes.",
+  "author": "AngelDevIndie",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "io.github.angeldevindie.misnotas",
+    "productName": "Mis Notas",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "style.css",
+      "js/**",
+      "icono.png",
+      "LICENSE"
+    ],
+    "win": {
+      "icon": "icono.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Mis Notas",
+      "artifactName": "Mis-Notas-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Mis-Notas-Portable-${version}.${ext}"
+    }
+  }
+}

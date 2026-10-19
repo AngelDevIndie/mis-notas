@@ -1,0 +1,11 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias y resultados de empaquetar
+node_modules/
+dist/
+
+# Secretos: nunca se suben
+.env
+.env.*
