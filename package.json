@@ -1,7 +1,7 @@
 {
   "name": "mis-notas",
   "productName": "Mis Notas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Editor de notas de escritorio con pestañas que no pierde nada de lo que escribes.",
   "author": "AngelDevIndie",
   "main": "main.js",
@@ -12,8 +12,8 @@
     "dist": "electron-builder --win"
   },
   "devDependencies": {
-    "electron": "^33.2.0",
-    "electron-builder": "25.1.8"
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
   },
   "license": "MIT",
   "build": {

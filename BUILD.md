@@ -75,7 +75,10 @@ Mis Notas está abierta. Ciérrala y repite.
 El `.exe` no está **firmado** con un certificado de código (cuestan dinero y no hacen falta para uso personal). Para abrirlo: "Más información" → "Ejecutar de todas formas". Firmarlo queda para más adelante.
 
 **`npm audit` avisa de vulnerabilidades.**
-Casi todas están en las herramientas de construcción, que no van dentro de la app (`npm audit --omit=dev` no da ninguna). La que sí cuenta es la versión de **Electron**: la 33 ya no recibe parches de seguridad. Mis Notas solo carga sus propios archivos y nunca abre páginas de internet, así que el riesgo es bajo, pero conviene pasar a una versión de Electron con soporte antes de compartir el instalador con más gente.
+Están en las herramientas de construcción, que no van dentro de la app: `npm audit --omit=dev` no da ninguna. Lo que sí va dentro es **Electron**, y conviene tenerlo en una versión que reciba parches de seguridad (desde la 0.2.0, Mis Notas usa Electron 44). Para actualizarlo, hazlo en una rama de Git y repite las pruebas antes de publicar.
+
+**La primera vez que se usa Electron tarda un poco más.**
+Desde la versión 44, Electron no se descarga al hacer `npm ci`, sino la primera vez que se usa (con `npm start`, por ejemplo). Es normal ver "Downloading Electron binary...". La build no lo necesita: electron-builder descarga su propia copia.
 
 ## Dónde guarda los datos
 
